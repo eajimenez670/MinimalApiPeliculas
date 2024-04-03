@@ -10,6 +10,9 @@ namespace MinimalApiPeliculas.Utilidades
         {
             CreateMap<Genero, GeneroDTO>();
             CreateMap<CrearGeneroDTO, Genero>();
+
+            CreateMap<Actor, ActorDTO>();
+            CreateMap<CrearActorDTO, Actor>().ForMember(x => x.Foto, p => p.Ignore());
         }
     }
 }

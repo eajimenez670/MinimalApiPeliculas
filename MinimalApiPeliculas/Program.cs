@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MinimalApiPeliculas;
 using MinimalApiPeliculas.Endpoints;
 using MinimalApiPeliculas.Repositorios;
+using MinimalApiPeliculas.Servicios;
 
 var builder = WebApplication.CreateBuilder(args);
 var origenes = builder.Configuration.GetValue<string>("origenesPermitidos")!;
@@ -31,6 +32,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IRepositorioGeneros, RepositorioGeneros>();
+builder.Services.AddScoped<IRepositorioActores, RepositorioActores>();
+
+builder.Services.AddScoped<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAutoMapper(typeof(Program));
 
@@ -43,14 +48,17 @@ if (builder.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseStaticFiles();
+
 app.UseCors();
 app.UseOutputCache();
 
 // Endpoint de prueba
 app.MapGet("/", [EnableCors(policyName: "libre")] () => "Hola Mundo");
 
-// Endpoints de género
+// Endpoints
 app.MapGroup("/generos").MapGeneros();
+app.MapGroup("/actores").MapActores();
 
 // Fin de área Middleware
 app.Run();
