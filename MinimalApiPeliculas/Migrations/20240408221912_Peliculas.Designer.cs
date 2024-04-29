@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MinimalApiPeliculas;
 
@@ -11,9 +12,11 @@ using MinimalApiPeliculas;
 namespace MinimalApiPeliculas.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240408221912_Peliculas")]
+    partial class Peliculas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,28 +48,6 @@ namespace MinimalApiPeliculas.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Actores");
-                });
-
-            modelBuilder.Entity("MinimalApiPeliculas.Entidades.Comentario", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Cuerpo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("PeliculaId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PeliculaId");
-
-                    b.ToTable("Comentarios");
                 });
 
             modelBuilder.Entity("MinimalApiPeliculas.Entidades.Genero", b =>
@@ -113,20 +94,6 @@ namespace MinimalApiPeliculas.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Peliculas");
-                });
-
-            modelBuilder.Entity("MinimalApiPeliculas.Entidades.Comentario", b =>
-                {
-                    b.HasOne("MinimalApiPeliculas.Entidades.Pelicula", null)
-                        .WithMany("Comentarios")
-                        .HasForeignKey("PeliculaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("MinimalApiPeliculas.Entidades.Pelicula", b =>
-                {
-                    b.Navigation("Comentarios");
                 });
 #pragma warning restore 612, 618
         }

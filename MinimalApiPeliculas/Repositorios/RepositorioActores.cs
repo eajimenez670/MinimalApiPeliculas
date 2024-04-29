@@ -1,15 +1,19 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MinimalApiPeliculas.DTOs;
 using MinimalApiPeliculas.Entidades;
+using MinimalApiPeliculas.Utilidades;
 
 namespace MinimalApiPeliculas.Repositorios
 {
     public class RepositorioActores : IRepositorioActores
     {
         private readonly ApplicationDbContext _dbContext;
+        private readonly HttpContext _httpContext;
 
-        public RepositorioActores(ApplicationDbContext dbContext)
+        public RepositorioActores(ApplicationDbContext dbContext, IHttpContextAccessor httpContextAccessor)
         {
             _dbContext = dbContext;
+            _httpContext = httpContextAccessor.HttpContext!;
         }
 
         public async Task Actualizar(Actor actor)
@@ -41,10 +45,13 @@ namespace MinimalApiPeliculas.Repositorios
             return await _dbContext.Actores.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<IEnumerable<Actor>> ObtenerTodo()
+        public async Task<IEnumerable<Actor>> ObtenerTodo(PaginacionDTO paginacionDTO)
         {
-            return await _dbContext.Actores.OrderBy(x => x.Nombre).ToListAsync();
+            var queryable = _dbContext.Actores.AsQueryable();
+            await _httpContext.InsertarParametrosPaginacionEnCabecera(queryable);
+            return await queryable.OrderBy(x => x.Nombre).Paginar(paginacionDTO).ToListAsync();
         }
+
         public async Task<IEnumerable<Actor>> ObtenerPorNombre(string nombre)
         {
             return await _dbContext.Actores
