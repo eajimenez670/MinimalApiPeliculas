@@ -41,7 +41,8 @@ namespace MinimalApiPeliculas.Repositorios
 
         public async Task<Pelicula?> ObtenerPorId(int id)
         {
-            return await _dbContext.Peliculas.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            return await _dbContext.Peliculas.Include(p => p.Comentarios)
+                .AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task<IEnumerable<Pelicula>> ObtenerTodo(PaginacionDTO paginacionDTO)
