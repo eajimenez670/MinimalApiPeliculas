@@ -21,6 +21,7 @@ namespace MinimalApiPeliculas.Endpoints
             group.MapPost("obtenerPorNombre/{nombre}", ObtenerPorNombre);
             group.MapPut("/{id:int}", Actualizar).DisableAntiforgery();
             group.MapDelete("/{id:int}", Borrar);
+            group.MapPost("/{id:int}/asignarGeneros", AsignarGeneros);
 
             return group;
         }
@@ -104,6 +105,27 @@ namespace MinimalApiPeliculas.Endpoints
             await repositorio.Borrar(id);
             await almacenadorArchivos.Borrar(peliculaDB.Poster, _contenedor);
             await outputCacheStore.EvictByTagAsync("peliculas-get", default);
+            return TypedResults.NoContent();
+        }
+
+        static async Task<Results<NoContent, NotFound, BadRequest<string>>> AsignarGeneros(int id, List<int> generosIds,
+            IRepositorioPeliculas repositorioPeliculas, IRepositorioGeneros repositorioGeneros)
+        {
+            if (!await repositorioPeliculas.Existe(id))
+                return TypedResults.NotFound();
+
+            var generosExistentes = new List<int>();
+
+            if (generosIds.Count != 0)
+                generosExistentes = await repositorioGeneros.Existen(generosIds);
+
+            if (generosExistentes.Count != generosIds.Count)
+            {
+                var generosNoExistentes = generosIds.Except(generosExistentes);
+                return TypedResults.BadRequest($"Los géneros de id {string.Join(",", generosNoExistentes)} no existen.");
+            }
+
+            await repositorioPeliculas.AsignarGeneros(id, generosIds);
             return TypedResults.NoContent();
         }
     }

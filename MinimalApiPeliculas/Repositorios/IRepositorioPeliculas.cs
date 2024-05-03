@@ -6,6 +6,7 @@ namespace MinimalApiPeliculas.Repositorios
     public interface IRepositorioPeliculas
     {
         Task Actualizar(Pelicula pelicula);
+        Task AsignarGeneros(int id, List<int> generosIds);
         Task Borrar(int id);
         Task<int> Crear(Pelicula pelicula);
         Task<bool> Existe(int id);
