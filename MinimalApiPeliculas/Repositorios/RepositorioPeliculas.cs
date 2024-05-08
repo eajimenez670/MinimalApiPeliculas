@@ -45,7 +45,12 @@ namespace MinimalApiPeliculas.Repositorios
 
         public async Task<Pelicula?> ObtenerPorId(int id)
         {
-            return await _dbContext.Peliculas.Include(p => p.Comentarios)
+            return await _dbContext.Peliculas
+                .Include(p => p.Comentarios)
+                .Include(p => p.GenerosPeliculas)
+                    .ThenInclude(gp => gp.Genero)
+                .Include(p => p.ActoresPeliculas.OrderBy(a => a.Orden))
+                    .ThenInclude(ap => ap.Actor)
                 .AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         }
 
@@ -75,6 +80,24 @@ namespace MinimalApiPeliculas.Repositorios
             var generosPeliculas = generosIds.Select(generoId => new GeneroPelicula { GeneroId = generoId });
 
             pelicula.GenerosPeliculas = _mapper.Map(generosPeliculas, pelicula.GenerosPeliculas);
+
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task AsignarActores(int id, List<ActorPelicula> actores)
+        {
+            for (int i = 1; i <= actores.Count; i++)
+            {
+                actores[i - 1].Orden = i;
+            }
+
+            var pelicula = await _dbContext.Peliculas.Include(p => p.ActoresPeliculas)
+                                                     .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (pelicula is null)
+                throw new ArgumentException($"No existe una película con el id {id}");
+
+            pelicula.ActoresPeliculas = _mapper.Map(actores, pelicula.ActoresPeliculas);
 
             await _dbContext.SaveChangesAsync();
         }
