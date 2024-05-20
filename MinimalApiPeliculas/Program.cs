@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.EntityFrameworkCore;
 using MinimalApiPeliculas;
@@ -40,6 +41,8 @@ builder.Services.AddScoped<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAutoMapper(typeof(Program));
+
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // Fin área de servicio
 var app = builder.Build();

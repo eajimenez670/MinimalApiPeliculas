@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OutputCaching;
 using MinimalApiPeliculas.DTOs;
@@ -39,8 +40,14 @@ namespace MinimalApiPeliculas.Endpoints
             return TypedResults.Ok(mapper.Map<GeneroDTO>(genero));
         }
 
-        static async Task<Created<GeneroDTO>> CrearGenero(CrearGeneroDTO crearGenero, IRepositorioGeneros repositorio, IOutputCacheStore outputCacheStore, IMapper mapper)
+        static async Task<Results<Created<GeneroDTO>, ValidationProblem>> CrearGenero(
+            CrearGeneroDTO crearGenero, IRepositorioGeneros repositorio,
+            IOutputCacheStore outputCacheStore, IMapper mapper, IValidator<CrearGeneroDTO> validador)
         {
+            var resultadoValidacion = await validador.ValidateAsync(crearGenero);
+            if (!resultadoValidacion.IsValid)
+                return TypedResults.ValidationProblem(resultadoValidacion.ToDictionary());
+
             var genero = mapper.Map<Genero>(crearGenero);
             var id = await repositorio.Crear(genero);
             await outputCacheStore.EvictByTagAsync("generos-get", default);
