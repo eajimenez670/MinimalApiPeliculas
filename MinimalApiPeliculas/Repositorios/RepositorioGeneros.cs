@@ -36,6 +36,11 @@ namespace MinimalApiPeliculas.Repositorios
             return await _dbContext.Generos.AnyAsync(x => x.Id == id);
         }
 
+        public async Task<bool> Existe(int id, string nombre)
+        {
+            return await _dbContext.Generos.AnyAsync(x => x.Id != id && x.Nombre == nombre);
+        }
+
         public async Task<Genero?> ObtenerPorId(int id)
         {
             return await _dbContext.Generos.FirstOrDefaultAsync(x => x.Id == id);

@@ -16,5 +16,6 @@ namespace MinimalApiPeliculas.Repositorios
 
         Task Borrar(int id);
         Task<List<int>> Existen(List<int> ids);
+        Task<bool> Existe(int id, string nombre);
     }
 }

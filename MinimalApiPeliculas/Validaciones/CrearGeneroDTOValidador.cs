@@ -1,28 +1,29 @@
 ﻿using FluentValidation;
 using MinimalApiPeliculas.DTOs;
+using MinimalApiPeliculas.Repositorios;
 
 namespace MinimalApiPeliculas.Validaciones
 {
     public class CrearGeneroDTOValidador : AbstractValidator<CrearGeneroDTO>
     {
-        public CrearGeneroDTOValidador()
+        public CrearGeneroDTOValidador(IRepositorioGeneros repositorioGeneros, IHttpContextAccessor contextAccessor)
         {
-            RuleFor(x => x.Nombre).NotEmpty().WithMessage("El campo {PropertyName} es requerido")
-                                  .MaximumLength(50).WithMessage("El campo {PropertyName} debe tener menos de {MaxLength} caracteres")
-                                  .Must(PrimeraLetraEnMayuscula).WithMessage("El campo {PropertyName} debe comenzar con mayúscula");
+            var valorDeRutaId = contextAccessor.HttpContext?.Request.RouteValues["id"];
+            var id = 0;
 
-        }
-
-        private bool PrimeraLetraEnMayuscula(string valor)
-        {
-            if (string.IsNullOrWhiteSpace(valor))
+            if (valorDeRutaId is string valorString)
             {
-                return true;
+                int.TryParse(valorString, out id);
             }
 
-            var primeraLetra = valor[0].ToString();
-
-            return primeraLetra == primeraLetra.ToUpper();
+            RuleFor(x => x.Nombre).NotEmpty().WithMessage(Utilidades.NotEmptyMensaje)
+                                  .MaximumLength(50).WithMessage(Utilidades.MaximunLengthMensaje)
+                                  .Must(Utilidades.PrimeraLetraEnMayuscula).WithMessage(Utilidades.PrimeraLetraEnMayusculaMensaje)
+                                  .MustAsync(async (nombre, _) =>
+                                  {
+                                      var existe = await repositorioGeneros.Existe(id, nombre);
+                                      return !existe;
+                                  }).WithMessage(g => $"Ya existe un género con el nombre {g.Nombre}");
         }
     }
 }
