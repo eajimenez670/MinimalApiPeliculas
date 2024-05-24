@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using MinimalApiPeliculas.DTOs;
 using MinimalApiPeliculas.Entidades;
+using MinimalApiPeliculas.Filtros;
 using MinimalApiPeliculas.Repositorios;
 using MinimalApiPeliculas.Servicios;
 
@@ -17,9 +18,9 @@ namespace MinimalApiPeliculas.Endpoints
         {
             group.MapGet("/", Obtener).CacheOutput(c => c.Expire(TimeSpan.FromSeconds(60)).Tag("peliculas-get"));
             group.MapGet("/{id:int}", ObtenerPorId);
-            group.MapPost("/", Crear).DisableAntiforgery();
             group.MapPost("obtenerPorNombre/{nombre}", ObtenerPorNombre);
-            group.MapPut("/{id:int}", Actualizar).DisableAntiforgery();
+            group.MapPost("/", Crear).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearPeliculaDTO>>();
+            group.MapPut("/{id:int}", Actualizar).DisableAntiforgery().AddEndpointFilter<FiltroValidaciones<CrearPeliculaDTO>>();
             group.MapDelete("/{id:int}", Borrar);
             group.MapPost("/{id:int}/asignarGeneros", AsignarGeneros);
             group.MapPost("/{id:int}/asignarActores", AsignarActores);
@@ -27,8 +28,9 @@ namespace MinimalApiPeliculas.Endpoints
             return group;
         }
 
-        static async Task<Created<PeliculaDTO>> Crear([FromForm] CrearPeliculaDTO crearPeliculaDTO, IRepositorioPeliculas repositorio,
-           IOutputCacheStore outputCacheStore, IMapper mapper, IAlmacenadorArchivos almacenadorArchivos)
+        static async Task<Created<PeliculaDTO>> Crear([FromForm] CrearPeliculaDTO crearPeliculaDTO,
+            IRepositorioPeliculas repositorio, IOutputCacheStore outputCacheStore, IMapper mapper,
+            IAlmacenadorArchivos almacenadorArchivos)
         {
             var pelicula = mapper.Map<Pelicula>(crearPeliculaDTO);
 

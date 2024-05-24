@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OutputCaching;
 using MinimalApiPeliculas.DTOs;
 using MinimalApiPeliculas.Entidades;
+using MinimalApiPeliculas.Filtros;
 using MinimalApiPeliculas.Repositorios;
 
 namespace MinimalApiPeliculas.Endpoints
@@ -17,8 +18,8 @@ namespace MinimalApiPeliculas.Endpoints
                                    .SetVaryByRouteValue(new string[] { "peliculaId" }));
 
             group.MapGet("/{id:int}", ObtenerPorId);
-            group.MapPost("/", Crear);
-            group.MapPut("/{id:int}", Actualizar);
+            group.MapPost("/", Crear).AddEndpointFilter<FiltroValidaciones<CrearComentarioDTO>>();
+            group.MapPut("/{id:int}", Actualizar).AddEndpointFilter<FiltroValidaciones<CrearComentarioDTO>>();
             group.MapDelete("/{id:int}", Borrar);
 
             return group;

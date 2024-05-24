@@ -44,6 +44,8 @@ builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+builder.Services.AddProblemDetails();
+
 // Fin área de servicio
 var app = builder.Build();
 // Área Middleware
@@ -53,6 +55,14 @@ if (builder.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.Run(async context =>
+{
+    await TypedResults.BadRequest(
+        new { tipo = "error", mensaje = "ha ocurrido un error inesperado", estatus = 500 }
+        ).ExecuteAsync(context);
+}));
+app.UseStatusCodePages();
+
 app.UseStaticFiles();
 
 app.UseCors();
@@ -60,6 +70,10 @@ app.UseOutputCache();
 
 // Endpoint de prueba
 app.MapGet("/", [EnableCors(policyName: "libre")] () => "Hola Mundo");
+app.MapGet("/error", () =>
+{
+    throw new InvalidOperationException("Error de ejemplo");
+});
 
 // Endpoints
 app.MapGroup("/generos").MapGeneros();
