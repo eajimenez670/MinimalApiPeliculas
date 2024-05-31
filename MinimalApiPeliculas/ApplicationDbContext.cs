@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using MinimalApiPeliculas.Entidades;
 
 namespace MinimalApiPeliculas
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext
     {
         public ApplicationDbContext(DbContextOptions options) : base(options)
         {
@@ -24,6 +26,14 @@ namespace MinimalApiPeliculas
             modelBuilder.Entity<GeneroPelicula>().HasKey(g => new { g.GeneroId, g.PeliculaId });
 
             modelBuilder.Entity<ActorPelicula>().HasKey(a => new { a.PeliculaId, a.ActorId });
+
+            modelBuilder.Entity<IdentityUser>().ToTable("Usuarios");
+            modelBuilder.Entity<IdentityRole>().ToTable("Roles");
+            modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("RolesClaims");
+            modelBuilder.Entity<IdentityUserClaim<string>>().ToTable("UsuariosClaims");
+            modelBuilder.Entity<IdentityUserLogin<string>>().ToTable("UsuariosLogins");
+            modelBuilder.Entity<IdentityUserRole<string>>().ToTable("UsuariosRoles");
+            modelBuilder.Entity<IdentityUserToken<string>>().ToTable("UsuariosTokens");
         }
 
         public DbSet<Genero> Generos { get; set; }
@@ -32,5 +42,6 @@ namespace MinimalApiPeliculas
         public DbSet<Comentario> Comentarios { get; set; }
         public DbSet<GeneroPelicula> GenerosPeliculas { get; set; }
         public DbSet<ActorPelicula> ActoresPeliculas { get; set; }
+        public DbSet<Error> Errores { get; set; }
     }
 }
