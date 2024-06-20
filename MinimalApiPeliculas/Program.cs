@@ -2,12 +2,17 @@ using FluentValidation;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using MinimalApiPeliculas;
 using MinimalApiPeliculas.Endpoints;
 using MinimalApiPeliculas.Entidades;
 using MinimalApiPeliculas.Repositorios;
 using MinimalApiPeliculas.Servicios;
+using MinimalApiPeliculas.Swagger;
+using MinimalApiPeliculas.Utilidades;
 
 var builder = WebApplication.CreateBuilder(args);
 var origenes = builder.Configuration.GetValue<string>("origenesPermitidos")!;
@@ -40,7 +45,49 @@ builder.Services.AddCors(opt =>
 
 builder.Services.AddOutputCache();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Películas API",
+        Description = "Este es un web api para trabajar con datos de películas",
+        Contact = new OpenApiContact
+        {
+            Email = "edisonjimenez@gmail.com",
+            Name = "Edison Jimenez"
+        },
+        License = new OpenApiLicense
+        {
+            Name = "MIT",
+            Url = new Uri("https://opensource.org/license/mit/")
+        },
+    });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header
+    });
+
+    c.OperationFilter<FiltroAutorizacion>();
+
+    //c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    //{
+    //    {
+    //        new OpenApiSecurityScheme
+    //        {
+    //            Reference = new OpenApiReference
+    //            {
+    //                Type = ReferenceType.SecurityScheme,
+    //                Id = "Bearer"
+    //            }
+    //        }, new string[]{ }
+    //    }
+    //});
+});
 
 builder.Services.AddScoped<IRepositorioGeneros, RepositorioGeneros>();
 builder.Services.AddScoped<IRepositorioActores, RepositorioActores>();
@@ -49,6 +96,8 @@ builder.Services.AddScoped<IRepositorioComentarios, RepositorioComentarios>();
 builder.Services.AddScoped<IRepositorioErrores, RepositorioErrores>();
 
 builder.Services.AddScoped<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
+builder.Services.AddTransient<IServicioUsuarios, ServicioUsuarios>();
+
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAutoMapper(typeof(Program));
@@ -57,8 +106,25 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddProblemDetails();
 
-builder.Services.AddAuthentication().AddJwtBearer();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthentication().AddJwtBearer(opciones =>
+{
+    opciones.MapInboundClaims = false;
+
+    opciones.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        //IssuerSigningKey = Llaves.ObtenerLlave(builder.Configuration).First(), // Usar una única llave de autenticación 
+        IssuerSigningKeys = Llaves.ObtenerTodasLasLlaves(builder.Configuration), // Usar múltiples llaves de autenticación
+        ClockSkew = TimeSpan.Zero
+    };
+});
+builder.Services.AddAuthorization(opciones =>
+{
+    opciones.AddPolicy("esadmin", politica => politica.RequireClaim("esadmin"));
+});
 
 // Fin área de servicio
 var app = builder.Build();
@@ -104,11 +170,22 @@ app.MapGet("/error", () =>
     throw new InvalidOperationException("Error de ejemplo");
 });
 
+app.MapPost("/modelbinding/{nombre}", ([FromRoute] string? nombre) =>
+{
+    if (nombre is null)
+    {
+        nombre = "Vacio";
+    }
+
+    return TypedResults.Ok(nombre);
+});
+
 // Endpoints
 app.MapGroup("/generos").MapGeneros();
 app.MapGroup("/actores").MapActores();
 app.MapGroup("/peliculas").MapPeliculas();
 app.MapGroup("/pelicula/{peliculaId:int}/comentarios").MapComentarios();
+app.MapGroup("/usuarios").MapUsuarios();
 
 // Fin de área Middleware
 app.Run();

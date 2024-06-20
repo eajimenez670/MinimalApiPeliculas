@@ -101,5 +101,10 @@ namespace MinimalApiPeliculas.Repositorios
 
             await _dbContext.SaveChangesAsync();
         }
+
+        public Task<List<Pelicula>> Filtrar(PeliculasFiltrarDTO peliculasFiltrarDTO)
+        {
+            
+        }
     }
 }

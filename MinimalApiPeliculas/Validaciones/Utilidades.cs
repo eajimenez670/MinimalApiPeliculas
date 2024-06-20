@@ -5,6 +5,7 @@
         public static string NotEmptyMensaje = "El campo {PropertyName} es requerido";
         public static string MaximunLengthMensaje = "El campo {PropertyName} debe tener menos de {MaxLength} caracteres";
         public static string PrimeraLetraEnMayusculaMensaje = "El campo {PropertyName} debe comenzar con mayúscula";
+        public static string EmailAddressMensaje = "El campo {PropertyName} debe ser un correo electrónico válido";
 
         public static string GreaterThanOrEqualToMensaje(DateTime fechaMinima) =>
             "El campo {PropertyName} debe ser posterior a " + fechaMinima.ToString("yyyy-MM-dd");

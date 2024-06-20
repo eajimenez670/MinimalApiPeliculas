@@ -14,5 +14,6 @@ namespace MinimalApiPeliculas.Repositorios
         Task<Pelicula?> ObtenerPorId(int id);
         Task<IEnumerable<Pelicula>> ObtenerPorNombre(string nombre);
         Task<IEnumerable<Pelicula>> ObtenerTodo(PaginacionDTO paginacionDTO);
+        Task<List<Pelicula>> Filtrar(PeliculasFiltrarDTO peliculasFiltrarDTO);
     }
 }
