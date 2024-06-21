@@ -82,6 +82,9 @@ namespace MinimalApiPeliculas.Utilidades
                     Schema = new OpenApiSchema
                     {
                         Type = "string",
+                        Enum = new List<IOpenApiAny> {
+                            new OpenApiString("Titulo"),
+                            new OpenApiString("FechaLanzamiento") }
                     }
                 });
 

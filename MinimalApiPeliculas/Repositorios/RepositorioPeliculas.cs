@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MinimalApiPeliculas.DTOs;
 using MinimalApiPeliculas.Entidades;
 using MinimalApiPeliculas.Utilidades;
+using System.Linq.Dynamic.Core;
 
 namespace MinimalApiPeliculas.Repositorios
 {
@@ -10,13 +11,15 @@ namespace MinimalApiPeliculas.Repositorios
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly IMapper _mapper;
+        private readonly ILogger<RepositorioPeliculas> _logger;
         private readonly HttpContext _httpContext;
 
         public RepositorioPeliculas(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor,
-            IMapper mapper)
+            IMapper mapper, ILogger<RepositorioPeliculas> logger)
         {
             _dbContext = context;
             _mapper = mapper;
+            _logger = logger;
             _httpContext = httpContextAccessor.HttpContext!;
         }
 
@@ -102,9 +105,49 @@ namespace MinimalApiPeliculas.Repositorios
             await _dbContext.SaveChangesAsync();
         }
 
-        public Task<List<Pelicula>> Filtrar(PeliculasFiltrarDTO peliculasFiltrarDTO)
+        public async Task<List<Pelicula>> Filtrar(PeliculasFiltrarDTO peliculasFiltrarDTO)
         {
-            
+            var peliculasQueryable = _dbContext.Peliculas.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(peliculasFiltrarDTO.Titulo))
+            {
+                peliculasQueryable = peliculasQueryable.Where(p => p.Titulo.Contains(peliculasFiltrarDTO.Titulo));
+            }
+
+            if (peliculasFiltrarDTO.EnCines)
+            {
+                peliculasQueryable = peliculasQueryable.Where(p => p.EnCines);
+            }
+
+            if (peliculasFiltrarDTO.ProximosEstrenos)
+            {
+                peliculasQueryable = peliculasQueryable.Where(p => p.FechaLanzamiento > DateTime.Today);
+            }
+
+            if (peliculasFiltrarDTO.GeneroId != 0)
+            {
+                peliculasQueryable = peliculasQueryable
+                    .Where(p => p.GenerosPeliculas.Select(gp => gp.GeneroId)
+                    .Contains(peliculasFiltrarDTO.GeneroId));
+            }
+
+            if (!string.IsNullOrWhiteSpace(peliculasFiltrarDTO.CampoOrdenar))
+            {
+                var tipoOrden = peliculasFiltrarDTO.OrdenAscendente ? "ascending" : "descending";
+                try
+                {
+                    peliculasQueryable = peliculasQueryable.OrderBy($"{peliculasFiltrarDTO.CampoOrdenar} {tipoOrden}");
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e.Message, e);
+                }
+            }
+
+            await _httpContext.InsertarParametrosPaginacionEnCabecera(peliculasQueryable);
+            var peliculas = await peliculasQueryable.Paginar(peliculasFiltrarDTO.PaginacionDTO).ToListAsync();
+
+            return peliculas;
         }
     }
 }
