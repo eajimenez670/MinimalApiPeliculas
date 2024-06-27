@@ -9,10 +9,12 @@ using Microsoft.OpenApi.Models;
 using MinimalApiPeliculas;
 using MinimalApiPeliculas.Endpoints;
 using MinimalApiPeliculas.Entidades;
+using MinimalApiPeliculas.GraphQL;
 using MinimalApiPeliculas.Repositorios;
 using MinimalApiPeliculas.Servicios;
 using MinimalApiPeliculas.Swagger;
 using MinimalApiPeliculas.Utilidades;
+using Error = MinimalApiPeliculas.Entidades.Error;
 
 var builder = WebApplication.CreateBuilder(args);
 var origenes = builder.Configuration.GetValue<string>("origenesPermitidos")!;
@@ -22,6 +24,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(opt =>
 {
     opt.UseSqlServer("name=Default");
 });
+
+builder.Services.AddGraphQLServer()
+    .AddQueryType<Query>()
+    .AddMutationType<Mutacion>()
+    .AddAuthorization()
+    .AddProjections()
+    .AddFiltering()
+    .AddSorting();
 
 builder.Services.AddIdentityCore<IdentityUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -43,7 +53,15 @@ builder.Services.AddCors(opt =>
     });
 });
 
-builder.Services.AddOutputCache();
+// Caché por aplicación - Microsoft
+//builder.Services.AddOutputCache();
+
+// Usos de caché distribuido - Redis
+builder.Services.AddStackExchangeRedisOutputCache(opciones =>
+{
+    opciones.Configuration = builder.Configuration.GetConnectionString("redis");
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -129,11 +147,17 @@ builder.Services.AddAuthorization(opciones =>
 // Fin área de servicio
 var app = builder.Build();
 // Área Middleware
-if (builder.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+// Swagger unicamente en desarrollo
+//if (builder.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
+
+// Swagger en todos los ambientes
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseExceptionHandler(exceptionHandlerApp => exceptionHandlerApp.Run(async context =>
 {
@@ -162,6 +186,8 @@ app.UseCors();
 app.UseOutputCache();
 
 app.UseAuthorization();
+
+app.MapGraphQL();
 
 // Endpoint de prueba
 app.MapGet("/", [EnableCors(policyName: "libre")] () => "Hola Mundo");

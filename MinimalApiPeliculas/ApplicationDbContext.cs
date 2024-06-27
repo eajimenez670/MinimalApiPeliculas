@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using MinimalApiPeliculas.Entidades;
+using Error = MinimalApiPeliculas.Entidades.Error;
 
 namespace MinimalApiPeliculas
 {
